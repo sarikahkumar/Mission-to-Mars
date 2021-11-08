@@ -19,7 +19,8 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": hemispheres(browser)
     }
 
     # Stop webdriver and return data
@@ -89,6 +90,43 @@ def mars_facts():
 
     except BaseException:
         return None
+
+def hemispheres(browser):
+    url_main = 'https://marshemispheres.com/'
+    browser.visit(url_main)
+
+    hemisphere_image_urls = []
+    html = browser.html
+
+    hemisperes_soup = soup(html, 'html.parser')
+    for link in hemisperes_soup.find_all('div', class_='description'):
+        a_tag = link.find('a', class_='product-item')
+        url_hemispheres = a_tag.get('href')
+        title = a_tag.get_text()
+    
+        browser.visit(f'{url_main}{url_hemispheres}')
+        html = browser.html
+        img_soup = soup(html, 'html.parser')
+    
+        a_tag = img_soup.find('div', class_='downloads').select('a')[0]
+        img_url = f"{url_main}{a_tag.get('href')}"
+
+   
+        hemispheres = {'img_url': img_url,
+                    'title': title}
+        hemisphere_image_urls.append(hemispheres)
+    return hemisphere_image_urls
+    
+    # Assign columns and set index of dataframe
+    df.columns=['Description', 'Mars', 'Earth']
+    df.set_index('Description', inplace=True)
+
+    # Convert dataframe into HTML format, add bootstrap
+    html_table = df.to_html(classes=["table", "table-bordered", "table-hover", "table-striped "]).replace("<thead>", "<thead.thead-dark>")
+    html_table = html_table.replace("<th></th>\n      <th>Mars</th>\n      <th>Earth</th>\n    </tr>\n    <tr>\n      <th>Description</th>\n      <th></th>\n      <th></th>\n",'<th>Description</th> <th>Mars</th> <th>Earth</th>' )
+    return html_table
+
+
 
     # Assign columns and set index of dataframe
     df.columns=['Description', 'Mars', 'Earth']
